@@ -51,12 +51,18 @@ def click(x=None, y=None):
     send(up)
 
 
-def scroll(notches, pos=None):
+def scroll(notches, pos=None, interval=0.03, wait=time.sleep):
     """Wheel-scroll under the cursor (or at `pos` if given). notches > 0 up, < 0 down.
-    All notches go out in a single SendInput call."""
+    Notches go out one at a time, `interval` seconds apart: a burst in one SendInput call gets
+    merged or dropped by apps that handle one wheel event per frame or debounce wheel in JS."""
     if pos is not None:
-        _move(int(pos[0]), int(pos[1]))
-        time.sleep(0.05)               # let the target see the cursor before the wheel arrives
+        x, y = int(pos[0]), int(pos[1])
+        _move(x + 1, y)                # nudge first: a move to the spot the cursor is already on
+        _move(x, y)                    # produces no WM_MOUSEMOVE, so the hover target is not refreshed
+        wait(0.1)                      # let the target see the cursor before the wheel arrives
     step = WHEEL_DELTA if notches > 0 else -WHEEL_DELTA
     wheel = INPUT(type=INPUT_MOUSE, mi=MOUSEINPUT(0, 0, step & 0xFFFFFFFF, MOUSEEVENTF_WHEEL, 0, 0))
-    send(*[wheel] * abs(int(notches)))
+    for i in range(abs(int(notches))):
+        if i:
+            wait(interval)
+        send(wheel)

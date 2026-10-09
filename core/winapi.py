@@ -22,6 +22,12 @@ def cursor_pos():
     return pt.x, pt.y
 
 
+def window_at(x, y):
+    """Top-level window under the screen point (x, y), or 0."""
+    hwnd = user32.WindowFromPoint(wintypes.POINT(int(x), int(y)))
+    return user32.GetAncestor(hwnd, 2) if hwnd else 0     # GA_ROOT
+
+
 def client_rect(hwnd):
     """Client area of the window in screen coordinates (left, top, width, height). None if unusable."""
     if not user32.IsWindow(hwnd) or user32.IsIconic(hwnd):  # closed / minimized

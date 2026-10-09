@@ -94,7 +94,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.click(pos=None, offset=(0, 0))` | Click at coordinates; with no `pos`, click where the cursor is now |
 | `ctx.key("enter")` / `("ctrl+shift+a")` / `("f5")` | Press keys (`hold=0.03, after=0.05, scan=True`) |
 | `ctx.move(pos=None, offset=(0, 0), duration=0)` | Move the cursor without clicking, using real mouse-move events. No `pos` = center of the target window / screen. `duration` > 0 moves in a straight line over that many seconds (0.2-0.5 looks smooth; under ~50 ms is practically instant). Returns the position, or `None` if there is no window |
-| `ctx.scroll(notches, pos=None, at_center=True)` | Mouse-wheel scroll: `> 0` up, `< 0` down. Moves the cursor to `pos`, or to the center of the target window if omitted (`at_center=False` keeps the cursor where it is). All notches go out in one call |
+| `ctx.scroll(notches, pos=None, at_center=True)` | Mouse-wheel scroll: `> 0` up, `< 0` down. Moves the cursor to `pos`, or to the center of the target window if omitted (`at_center=False` keeps the cursor where it is). Notches go out one at a time (~30 ms apart); warns if another window covers the spot |
 | `ctx.center()` | Center `(x, y)` of the target window / screen, or `None` |
 | `ctx.type("hello", interval=0.03)` | Type a string (unicode, any language; use `key` in games) |
 | `ctx.key_down("w")` / `ctx.key_up("w")` | Hold a key down (released automatically when the flow ends) |

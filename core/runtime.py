@@ -99,8 +99,14 @@ class Context:
         if pos is None and at_center:
             pos = self.center()
             if pos is None:
+                print("[scroll] skipped: target window not available")
                 return
-        scroll(notches, pos)
+        target = self._rt._target_hwnd() if (self._rt.target_title or self._rt._pinned) else None
+        if pos is not None and target:
+            under = winapi.window_at(*pos)
+            if under != target:       # the wheel goes to whatever window is under the cursor
+                print(f"[scroll] warning: {pos} is covered by another window: {winapi.window_title(under)!r}")
+        scroll(notches, pos, wait=self.sleep)
 
     def key(self, spec, hold=0.03, after=0.05, scan=True):
         """Press a key: ctx.key("enter"), ctx.key("ctrl+shift+a"), ctx.key("f5").
