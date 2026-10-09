@@ -60,7 +60,7 @@ The system clock is never changed; only the offset from server time is computed 
 
 | Setting | Description |
 |---------|-------------|
-| `SYNC` | `True` starts background sync at startup. Even if `False`, a flow can start it with `ctx.sync_time()` |
+| `SYNC` | `True` starts background sync at startup. It takes 10 samples, then stops and keeps the best offset. Even if `False`, a flow can start it with `ctx.sync_time()` |
 | `SYNC_URL` | URL to fetch the time from |
 | `SYNC_KEY` | Key path in the JSON response holding the epoch **milliseconds** |
 | `SYNC_INTERVAL` | Request interval range in seconds, random within it, one request at a time |
@@ -91,6 +91,7 @@ Uses the names registered in `config.IMG_LIST`.
 |----------|-------------|
 | `ctx.click(pos, offset=(0, 0))` | Click at coordinates |
 | `ctx.key("enter")` / `("ctrl+shift+a")` / `("f5")` | Press keys (`hold=0.03, after=0.05, scan=True`) |
+| `ctx.scroll(notches, pos=None)` | Mouse-wheel scroll: `> 0` up, `< 0` down. Scrolls what is under the cursor; with `pos` the cursor moves there first. All notches go out in one call, so large values are fast |
 | `ctx.type("hello", interval=0.03)` | Type a string (unicode, any language; use `key` in games) |
 | `ctx.key_down("w")` / `ctx.key_up("w")` | Hold a key down (released automatically when the flow ends) |
 

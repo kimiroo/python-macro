@@ -3,7 +3,8 @@
 server time = local time + offset. All times used by logic/schedules are in 'server time'.
 
 A background thread sends ONE request every 2-5 s (random), collects samples,
-and adopts the offset of the sample with the shortest RTT among the recent ones (no bursts).
+and adopts the offset of the sample with the shortest RTT among them (no bursts).
+It stops by itself after `count` successful samples (default 10); the final offset stays in use.
 """
 import http.client
 import json
@@ -19,6 +20,7 @@ from . import browser
 _offset = 0.0      # seconds. 0 before syncing (= system time as is)
 _samples = deque(maxlen=10)    # [(rtt, offset)]
 _thread = None
+_finished = False   # True once the sample quota was reached (start() is then a no-op)
 _stop = threading.Event()
 
 
@@ -45,17 +47,18 @@ def running():
 
 
 def start(url, key="data", interval=(2.0, 5.0), window=10, timeout=3.0, on_update=None,
-          ua=None, headers=None):
-    """Start background sync. Leaves it alone and returns False if already running.
+          ua=None, headers=None, count=10):
+    """Start background sync. Leaves it alone and returns False if already running or already finished.
+    count: stop after this many successful samples.
     on_update(offset, rtt) is called from the sync thread each time a sample comes in.
     ua/headers: browser-like request headers (see core.browser.build_headers)."""
     global _thread, _samples
-    if running():
+    if running() or _finished:
         return False
     _stop.clear()
     _samples = deque(maxlen=window)
     hdrs = browser.build_headers(url, ua, headers)
-    _thread = threading.Thread(target=_loop, args=(url, key, interval, timeout, on_update, hdrs),
+    _thread = threading.Thread(target=_loop, args=(url, key, interval, timeout, on_update, hdrs, count),
                                daemon=True, name="timesync")
     _thread.start()
     return True
@@ -65,8 +68,9 @@ def stop():
     _stop.set()
 
 
-def _loop(url, key, interval, timeout, on_update, headers):
-    global _offset
+def _loop(url, key, interval, timeout, on_update, headers, count):
+    global _offset, _finished
+    done = 0
     u = urlsplit(url)
     cls = http.client.HTTPSConnection if u.scheme == "https" else http.client.HTTPConnection
     path = (u.path or "/") + (f"?{u.query}" if u.query else "")
@@ -94,6 +98,11 @@ def _loop(url, key, interval, timeout, on_update, headers):
                 _offset = off
                 if on_update:
                     on_update(off, rtt)
+                done += 1
+                if done >= count:
+                    _finished = True
+                    print(f"Time sync: done after {done} samples, offset {off * 1000:+.2f} ms")
+                    break
             _stop.wait(random.uniform(*interval))
     finally:
         conn.close()

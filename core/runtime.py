@@ -10,7 +10,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from . import jobs, keys, precise, timesync, winapi
 from . import precise as precise_mod
-from .mouse import click
+from .mouse import click, scroll
 from .vision import load_templates, match
 
 
@@ -41,6 +41,12 @@ class Context:
     def click(self, pos, offset=(0, 0)):
         self._check()
         click(pos[0] + offset[0], pos[1] + offset[1])
+
+    def scroll(self, notches, pos=None):
+        """Mouse-wheel scroll: notches > 0 up, < 0 down (a notch is about 3 lines in most browsers).
+        Scrolls whatever is under the cursor; with `pos` the cursor is moved there first."""
+        self._check()
+        scroll(notches, pos)
 
     def key(self, spec, hold=0.03, after=0.05, scan=True):
         """Press a key: ctx.key("enter"), ctx.key("ctrl+shift+a"), ctx.key("f5").
