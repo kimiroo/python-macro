@@ -15,6 +15,13 @@ def foreground_window():
     return user32.GetForegroundWindow()
 
 
+def cursor_pos():
+    """Current cursor position in screen coordinates (x, y)."""
+    pt = wintypes.POINT()
+    user32.GetCursorPos(ctypes.byref(pt))
+    return pt.x, pt.y
+
+
 def client_rect(hwnd):
     """Client area of the window in screen coordinates (left, top, width, height). None if unusable."""
     if not user32.IsWindow(hwnd) or user32.IsIconic(hwnd):  # closed / minimized

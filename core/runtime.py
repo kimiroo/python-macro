@@ -38,20 +38,24 @@ class Context:
             return None
         return match(self._area, self._origin, self._rt.templates[name])
 
-    def click(self, pos, offset=(0, 0)):
+    def click(self, pos=None, offset=(0, 0)):
+        """Click at pos (+ offset), or at the current cursor position if pos is omitted."""
         self._check()
-        click(pos[0] + offset[0], pos[1] + offset[1])
+        if pos is None:
+            click()
+        else:
+            click(pos[0] + offset[0], pos[1] + offset[1])
 
-    def move(self, pos=None, offset=(0, 0)):
+    def move(self, pos=None, offset=(0, 0), duration=0.0):
         """Move the cursor without clicking. Without `pos`, to the center of the target window / screen.
-        Returns the position moved to, or None if the window is not available."""
+        duration > 0 moves in a straight line over that many seconds (0 = instant). Returns the position moved to, or None if the window is not available."""
         self._check()
         if pos is None:
             pos = self.center()
             if pos is None:
                 return None
         pos = (pos[0] + offset[0], pos[1] + offset[1])
-        move(*pos)
+        move(*pos, duration, self.sleep)
         return pos
 
     def center(self):
