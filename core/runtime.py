@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from . import jobs, keys, precise, timesync, winapi
 from . import precise as precise_mod
 from .mouse import click, move, scroll
+from .ocr import ocr, resolve_key
 from .vision import load_templates, match
 
 
@@ -63,6 +64,19 @@ class Context:
             if ok:
                 buf.tofile(save)
         return img
+
+    def ocr(self, image):
+        """Read the text in `image` with Google Cloud Vision: a BGR image such as ctx.crop(...), or an
+        image file path. Returns the text with whitespace removed, or None (also when image is None
+        or OCR is disabled because config.OCR_KEY is empty / the key file is missing)."""
+        self._check()
+        if self._rt.ocr_key is None:
+            print("OCR skipped: disabled (set config.OCR_KEY to the service-account key file)")
+            return None
+        if image is None:
+            print("OCR failed: no image")
+            return None
+        return ocr(image, self._rt.ocr_key)
 
     def click(self, pos=None, offset=(0, 0)):
         """Click at pos (+ offset), or at the current cursor position if pos is omitted."""
@@ -273,8 +287,10 @@ class Context:
 
 class Runtime:
     def __init__(self, img_list, sync_url=None, sync_key="data", sync=False, sync_interval=(2.0, 5.0),
-                 sync_ua=None, sync_headers=None, target_title="", auto_start=False, target_exact=False):
+                 sync_ua=None, sync_headers=None, target_title="", auto_start=False, target_exact=False,
+                 ocr_key=""):
         self.sync_url, self.sync_key, self.sync_interval = sync_url, sync_key, sync_interval
+        self.ocr_key = resolve_key(ocr_key)   # None: OCR disabled
         self.sync_ua, self.sync_headers = sync_ua, sync_headers
         self._auto_sync = sync
         self._last_off = None

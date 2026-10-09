@@ -27,3 +27,8 @@ SYNC_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, 
 # A value of None removes the header.
 # Example: {"Origin": "https://example.com", "Referer": "https://example.com/event"}
 SYNC_HEADERS = {}
+
+# OCR (ctx.ocr): path to the Google Cloud Vision service-account key JSON (relative = from the project folder).
+# Empty ('') or a missing file disables OCR; ctx.ocr() then returns None.
+# Example: OCR_KEY = 'service_account.json' or OCR_KEY = r'C:\keys\vision.json'
+OCR_KEY = ''

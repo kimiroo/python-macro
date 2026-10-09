@@ -3,3 +3,4 @@ dxcam
 keyboard
 numpy
 apscheduler
+google-cloud-vision

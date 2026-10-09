@@ -71,6 +71,14 @@ The system clock is never changed; only the offset from server time is computed 
 SYNC_HEADERS = {"Origin": "https://example.com", "Referer": "https://example.com/event"}
 ```
 
+### OCR (`OCR_KEY`)
+
+Path to the Google Cloud Vision service-account key JSON used by `ctx.ocr()` (relative paths are from the project folder). Empty (`''`, the default) or a missing file disables OCR, and `ctx.ocr()` returns `None`. Requires `pip install google-cloud-vision`. The key file is git-ignored.
+
+```python
+text = ctx.ocr(ctx.crop(ctx.find("label"), offset=(120, 0), size=(200, 40)))
+```
+
 ## logic.py guide
 
 ### ctx: screen (images)
@@ -83,6 +91,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.refresh()` | Update to the latest frame; `False` if there is no window |
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
 | `ctx.crop(anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None)` | Cut a region out of the current frame, positioned relative to an anchor (e.g. `ctx.find(name)`; `None` = top-left of the target window) so it follows the window / layout. `scale` multiplies offset and size (browser zoom ratio). `save="img/x.png"` writes a PNG you can register in `IMG_LIST`. Returns the BGR image or `None` |
+| `ctx.ocr(image)` | Read text with Google Cloud Vision. `image` is a BGR image such as `ctx.crop(...)`, or an image file path. Returns the text with all whitespace removed, or `None` (also when OCR is disabled). Needs `config.OCR_KEY` |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |
 | `ctx.click_image(name, offset, after)` | Click if visible and return `True` |
