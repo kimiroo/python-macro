@@ -101,6 +101,7 @@ Default is `config.TARGET_WINDOW` (`''` = whole screen).
 | Function | Description |
 |----------|-------------|
 | `ctx.set_window("title", timeout=10)` | Switch to the window whose title contains this; wait until it opens |
+| `ctx.focus_window("title", timeout=3)` | Bring the window to the front, restoring it if minimized. No title = the current target window. Does not change the target |
 | `ctx.use_active_window()` | Pin the window currently in front |
 | `ctx.use_full_screen()` | Go back to the whole screen |
 

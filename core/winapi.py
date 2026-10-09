@@ -46,3 +46,26 @@ def window_title(hwnd):
     buf = ctypes.create_unicode_buffer(256)
     user32.GetWindowTextW(hwnd, buf, 256)
     return buf.value
+
+
+def bring_to_front(hwnd):
+    """Restore (if minimized) and focus the window. Returns True if it ended up in front.
+    Windows blocks SetForegroundWindow from background processes, so attach to the input
+    queue of the current foreground thread first."""
+    if not user32.IsWindow(hwnd):
+        return False
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(hwnd, 9)              # SW_RESTORE
+    fg = user32.GetForegroundWindow()
+    if fg == hwnd:
+        return True
+    cur = ctypes.windll.kernel32.GetCurrentThreadId()
+    fg_thread = user32.GetWindowThreadProcessId(fg, None)
+    attached = bool(fg_thread) and fg_thread != cur and user32.AttachThreadInput(cur, fg_thread, True)
+    try:
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+    finally:
+        if attached:
+            user32.AttachThreadInput(cur, fg_thread, False)
+    return user32.GetForegroundWindow() == hwnd

@@ -92,6 +92,22 @@ class Context:
                 self.sleep(0.1)
         self.refresh()
 
+    def focus_window(self, title=None, timeout=3.0):
+        """Bring a window to the front. With `title`, the first visible window whose title contains it
+        (the search target is not changed; combine with set_window if needed). Without `title`, the
+        current target window. Restores it if minimized. Retries for up to `timeout` seconds and
+        raises TimeoutError (stops the flow) if it cannot be brought forward."""
+        end = time.monotonic() + timeout
+        while True:
+            hwnd = winapi.find_window(title) if title else self._rt._target_hwnd()
+            if hwnd and winapi.bring_to_front(hwnd):
+                self.sleep(0.05)
+                self.refresh()
+                return
+            if time.monotonic() > end:
+                raise TimeoutError(f"Could not bring window '{title or self._rt.target_title or 'target'}' to front")
+            self.sleep(0.1)
+
     def use_active_window(self):
         """Pin the currently focused window as the search target."""
         hwnd = winapi.foreground_window()
