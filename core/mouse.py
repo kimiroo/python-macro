@@ -10,6 +10,11 @@ MOUSEEVENTF_WHEEL = 0x0800
 WHEEL_DELTA = 120
 
 
+def move(x, y):
+    """Move the cursor to (x, y) without clicking."""
+    user32.SetCursorPos(int(x), int(y))
+
+
 def click(x, y):
     user32.SetCursorPos(int(x), int(y))
     down = INPUT(type=INPUT_MOUSE, mi=MOUSEINPUT(0, 0, 0, MOUSEEVENTF_LEFTDOWN, 0, 0))

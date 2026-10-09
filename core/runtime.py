@@ -10,7 +10,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from . import jobs, keys, precise, timesync, winapi
 from . import precise as precise_mod
-from .mouse import click, scroll
+from .mouse import click, move, scroll
 from .vision import load_templates, match
 
 
@@ -41,6 +41,18 @@ class Context:
     def click(self, pos, offset=(0, 0)):
         self._check()
         click(pos[0] + offset[0], pos[1] + offset[1])
+
+    def move(self, pos=None, offset=(0, 0)):
+        """Move the cursor without clicking. Without `pos`, to the center of the target window / screen.
+        Returns the position moved to, or None if the window is not available."""
+        self._check()
+        if pos is None:
+            pos = self.center()
+            if pos is None:
+                return None
+        pos = (pos[0] + offset[0], pos[1] + offset[1])
+        move(*pos)
+        return pos
 
     def center(self):
         """Center (x, y) of the target window (or the whole screen). None if the window is not available."""
