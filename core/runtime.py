@@ -1,9 +1,11 @@
 """Screen capture, target window, ON/OFF state, hotkeys, main loop, scheduler.
 Logic is injected via the step callback and the jobs registered in core.jobs."""
+import os
 import threading
 import time
 from datetime import timedelta
 
+import cv2
 import dxcam
 import keyboard
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -37,6 +39,30 @@ class Context:
         if self._area is None:
             return None
         return match(self._area, self._origin, self._rt.templates[name])
+
+    def crop(self, anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None):
+        """Cut a region out of the current frame, positioned relative to an anchor so it follows the
+        window / layout. anchor: screen (x, y) such as ctx.find(name) (None = top-left of the target
+        window). The region's top-left is anchor + offset, `size` is (w, h) in pixels; scale multiplies
+        offset and size (e.g. the browser zoom ratio). The part outside the window is dropped.
+        save: PNG path to write (folders are created). Returns the BGR image, or None if empty."""
+        if self._area is None:
+            return None
+        ax, ay = anchor if anchor is not None else self._origin
+        x0 = round(ax + offset[0] * scale) - self._origin[0]
+        y0 = round(ay + offset[1] * scale) - self._origin[1]
+        h, w = self._area.shape[:2]
+        x1, y1 = x0 + round(size[0] * scale), y0 + round(size[1] * scale)
+        x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, w), min(y1, h)
+        if x1 <= x0 or y1 <= y0:
+            return None
+        img = self._area[y0:y1, x0:x1].copy()
+        if save:
+            os.makedirs(os.path.dirname(os.path.abspath(save)), exist_ok=True)
+            ok, buf = cv2.imencode(os.path.splitext(save)[1] or ".png", img)   # imwrite breaks on non-ASCII paths
+            if ok:
+                buf.tofile(save)
+        return img
 
     def click(self, pos=None, offset=(0, 0)):
         """Click at pos (+ offset), or at the current cursor position if pos is omitted."""
@@ -112,12 +138,13 @@ class Context:
             keys.type_unicode(ch)
             self.sleep(interval)
 
-    def set_window(self, title, timeout=10.0):
-        """Switch the search target to the window whose title contains `title`. Waits up to
+    def set_window(self, title, timeout=10.0, exact=False):
+        """Switch the search target to the window whose title contains `title` (exact=True: whose whole
+        title equals it; both case-insensitive). Waits up to
         `timeout` seconds for it to appear; raises TimeoutError (stops the flow) if not found.
         timeout=0 sets the target without waiting. Afterwards find/click_image only search
         inside that window (persists after the flow ends)."""
-        self._rt.set_target(title=title)
+        self._rt.set_target(title=title, exact=exact)
         if timeout and self._rt._target_hwnd() is None:
             end = time.monotonic() + timeout
             while self._rt._target_hwnd() is None:
@@ -126,14 +153,14 @@ class Context:
                 self.sleep(0.1)
         self.refresh()
 
-    def focus_window(self, title=None, timeout=3.0):
+    def focus_window(self, title=None, timeout=3.0, exact=False):
         """Bring a window to the front. With `title`, the first visible window whose title contains it
-        (the search target is not changed; combine with set_window if needed). Without `title`, the
+        (exact=True: whose whole title equals it; the search target is not changed; combine with set_window if needed). Without `title`, the
         current target window. Restores it if minimized. Retries for up to `timeout` seconds and
         raises TimeoutError (stops the flow) if it cannot be brought forward."""
         end = time.monotonic() + timeout
         while True:
-            hwnd = winapi.find_window(title) if title else self._rt._target_hwnd()
+            hwnd = winapi.find_window(title, exact) if title else self._rt._target_hwnd()
             if hwnd and winapi.bring_to_front(hwnd):
                 self.sleep(0.05)
                 self.refresh()
@@ -240,13 +267,14 @@ class Context:
 
 class Runtime:
     def __init__(self, img_list, sync_url=None, sync_key="data", sync=False, sync_interval=(2.0, 5.0),
-                 sync_ua=None, sync_headers=None, target_title="", auto_start=False):
+                 sync_ua=None, sync_headers=None, target_title="", auto_start=False, target_exact=False):
         self.sync_url, self.sync_key, self.sync_interval = sync_url, sync_key, sync_interval
         self.sync_ua, self.sync_headers = sync_ua, sync_headers
         self._auto_sync = sync
         self._last_off = None
         self.templates = load_templates(img_list)
         self.target_title = target_title   # empty = full screen mode
+        self.target_exact = target_exact   # False: title substring (greedy), True: whole title must match
         self._hwnd = None
         self._pinned = False      # True: _hwnd is a window pinned directly
         self.running = auto_start   # True: start ON without pressing the toggle key
@@ -270,10 +298,11 @@ class Runtime:
         keyboard.add_hotkey(keys.QUIT, self.request_quit)
 
     # --- search area ---
-    def set_target(self, title=None, hwnd=None):
-        """Change the search target. title: substring match (re-found if the window changes),
-        hwnd: pin a specific window, neither: whole screen."""
+    def set_target(self, title=None, hwnd=None, exact=False):
+        """Change the search target. title: substring match, or whole-title match with exact=True
+        (re-found if the window changes), hwnd: pin a specific window, neither: whole screen."""
         self.target_title = title or ""
+        self.target_exact = exact
         self._pinned = hwnd is not None
         self._hwnd = hwnd
 
@@ -283,7 +312,7 @@ class Runtime:
         if self._pinned:
             return self._hwnd if winapi.user32.IsWindow(self._hwnd) else None
         if not (self._hwnd and winapi.user32.IsWindow(self._hwnd)):
-            self._hwnd = winapi.find_window(self.target_title)
+            self._hwnd = winapi.find_window(self.target_title, self.target_exact)
             if self._hwnd:
                 print("Target window:", winapi.window_title(self._hwnd))
         return self._hwnd

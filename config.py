@@ -12,6 +12,8 @@ AUTO_START = True
 # Target window title (substring match, case-insensitive). Empty ('') searches the whole screen.
 # If the window is not open yet or gets closed, it waits until the window opens and re-acquires it.
 TARGET_WINDOW = ''
+# False: the window title only has to contain TARGET_WINDOW (greedy). True: the whole title must equal it.
+TARGET_EXACT = False
 
 # Server time sync (the system clock is never changed)
 # SYNC = True starts background sync right at startup. Even if False, a flow can start it with ctx.sync_time().

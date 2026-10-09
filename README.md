@@ -46,7 +46,7 @@ IMG_LIST = {
 TARGET_WINDOW = ''   # '' = whole screen
 ```
 
-- Matches a substring of the window title (case-insensitive). Image search and coordinates are relative to this window.
+- By default it matches a substring of the window title (case-insensitive, "greedy"). Set `TARGET_EXACT = True` to require the whole title to equal `TARGET_WINDOW` (still case-insensitive). Image search and coordinates are relative to this window.
 - If the window is not open yet or gets closed, it waits until it opens and re-acquires it.
 - You can change it at runtime with `ctx.set_window()` / `ctx.use_active_window()` / `ctx.use_full_screen()`.
 
@@ -82,6 +82,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.find(name)` | `(x, y)` or `None` (based on the current frame) |
 | `ctx.refresh()` | Update to the latest frame; `False` if there is no window |
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
+| `ctx.crop(anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None)` | Cut a region out of the current frame, positioned relative to an anchor (e.g. `ctx.find(name)`; `None` = top-left of the target window) so it follows the window / layout. `scale` multiplies offset and size (browser zoom ratio). `save="img/x.png"` writes a PNG you can register in `IMG_LIST`. Returns the BGR image or `None` |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |
 | `ctx.click_image(name, offset, after)` | Click if visible and return `True` |
@@ -104,8 +105,8 @@ Default is `config.TARGET_WINDOW` (`''` = whole screen).
 
 | Function | Description |
 |----------|-------------|
-| `ctx.set_window("title", timeout=10)` | Switch to the window whose title contains this; wait until it opens |
-| `ctx.focus_window("title", timeout=3)` | Bring the window to the front, restoring it if minimized. No title = the current target window. Does not change the target |
+| `ctx.set_window("title", timeout=10, exact=False)` | Switch to the window whose title contains this (`exact=True`: whole title equals it); wait until it opens |
+| `ctx.focus_window("title", timeout=3, exact=False)` | Bring the window to the front, restoring it if minimized. No title = the current target window. `exact` works as in `set_window`. Does not change the target |
 | `ctx.use_active_window()` | Pin the window currently in front |
 | `ctx.use_full_screen()` | Go back to the whole screen |
 

@@ -33,16 +33,19 @@ def client_rect(hwnd):
     return pt.x, pt.y, rc.right, rc.bottom
 
 
-def find_window(substr):
-    """hwnd of the first visible top-level window whose title contains `substr` (case-insensitive). None if not found."""
+def find_window(title, exact=False):
+    """hwnd of the first visible top-level window matching `title` (case-insensitive). None if not found.
+    exact=False: the title only has to CONTAIN `title` (greedy). exact=True: the whole title must equal it."""
     found = []
-    needle = substr.lower()
+    needle = title.lower()
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
     def cb(hwnd, _):
-        if user32.IsWindowVisible(hwnd) and needle in window_title(hwnd).lower():
-            found.append(hwnd)
-            return False        # found it, stop enumerating
+        if user32.IsWindowVisible(hwnd):
+            name = window_title(hwnd).lower()
+            if (name == needle) if exact else (needle in name):
+                found.append(hwnd)
+                return False        # found it, stop enumerating
         return True
 
     user32.EnumWindows(cb, 0)
