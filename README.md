@@ -91,7 +91,8 @@ Uses the names registered in `config.IMG_LIST`.
 |----------|-------------|
 | `ctx.click(pos, offset=(0, 0))` | Click at coordinates |
 | `ctx.key("enter")` / `("ctrl+shift+a")` / `("f5")` | Press keys (`hold=0.03, after=0.05, scan=True`) |
-| `ctx.scroll(notches, pos=None)` | Mouse-wheel scroll: `> 0` up, `< 0` down. Scrolls what is under the cursor; with `pos` the cursor moves there first. All notches go out in one call, so large values are fast |
+| `ctx.scroll(notches, pos=None, at_center=True)` | Mouse-wheel scroll: `> 0` up, `< 0` down. Moves the cursor to `pos`, or to the center of the target window if omitted (`at_center=False` keeps the cursor where it is). All notches go out in one call |
+| `ctx.center()` | Center `(x, y)` of the target window / screen, or `None` |
 | `ctx.type("hello", interval=0.03)` | Type a string (unicode, any language; use `key` in games) |
 | `ctx.key_down("w")` / `ctx.key_up("w")` | Hold a key down (released automatically when the flow ends) |
 

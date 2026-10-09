@@ -1,4 +1,6 @@
 """SendInput mouse click."""
+import time
+
 from .sendinput import INPUT, INPUT_MOUSE, MOUSEINPUT, send
 from .winapi import user32
 
@@ -21,6 +23,7 @@ def scroll(notches, pos=None):
     All notches go out in a single SendInput call."""
     if pos is not None:
         user32.SetCursorPos(int(pos[0]), int(pos[1]))
+        time.sleep(0.05)               # let the target see the cursor before the wheel arrives
     step = WHEEL_DELTA if notches > 0 else -WHEEL_DELTA
     wheel = INPUT(type=INPUT_MOUSE, mi=MOUSEINPUT(0, 0, step & 0xFFFFFFFF, MOUSEEVENTF_WHEEL, 0, 0))
     send(*[wheel] * abs(int(notches)))

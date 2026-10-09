@@ -42,10 +42,22 @@ class Context:
         self._check()
         click(pos[0] + offset[0], pos[1] + offset[1])
 
-    def scroll(self, notches, pos=None):
+    def center(self):
+        """Center (x, y) of the target window (or the whole screen). None if the window is not available."""
+        if self._area is None:
+            return None
+        h, w = self._area.shape[:2]
+        return self._origin[0] + w // 2, self._origin[1] + h // 2
+
+    def scroll(self, notches, pos=None, at_center=True):
         """Mouse-wheel scroll: notches > 0 up, < 0 down (a notch is about 3 lines in most browsers).
-        Scrolls whatever is under the cursor; with `pos` the cursor is moved there first."""
+        The cursor is moved to `pos` first; without `pos` it goes to the center of the target window
+        (at_center=True), or stays where it is (at_center=False)."""
         self._check()
+        if pos is None and at_center:
+            pos = self.center()
+            if pos is None:
+                return
         scroll(notches, pos)
 
     def key(self, spec, hold=0.03, after=0.05, scan=True):
