@@ -169,16 +169,23 @@ class Context:
         self.sleep(after)
         return True
 
-    def wait_for(self, name, timeout=5.0, interval=0.05):
-        """Wait until `name` appears and return its coordinates. None on timeout."""
+    def wait_any(self, names, timeout=5.0, interval=0.05):
+        """Wait until ANY of `names` appears. Returns (name, (x, y)) of the first one found
+        (in list order if several are visible in the same frame), or None on timeout."""
         end = time.monotonic() + timeout
         while time.monotonic() < end:
             if self.refresh():
-                pos = self.find(name)
-                if pos:
-                    return pos
+                for name in names:
+                    pos = self.find(name)
+                    if pos:
+                        return name, pos
             self.sleep(interval)
         return None
+
+    def wait_for(self, name, timeout=5.0, interval=0.05):
+        """Wait until `name` appears and return its coordinates. None on timeout."""
+        hit = self.wait_any([name], timeout, interval)
+        return hit[1] if hit else None
 
     def wait_click(self, name, timeout=10.0, offset=(0, 0), after=0.3):
         """Wait for `name` and click it. Raises TimeoutError on timeout (stops the flow)."""

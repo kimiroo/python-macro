@@ -82,6 +82,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.find(name)` | `(x, y)` or `None` (based on the current frame) |
 | `ctx.refresh()` | Update to the latest frame; `False` if there is no window |
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
+| `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |
 | `ctx.click_image(name, offset, after)` | Click if visible and return `True` |
 
