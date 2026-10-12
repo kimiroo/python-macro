@@ -102,6 +102,19 @@ class Context:
         move(*pos, duration, self.sleep)
         return pos
 
+    def stop(self, message=None):
+        """End the running flow/job and switch the macro OFF (press the toggle key to start again from
+        the top). `message` is shown as a banner instead of the flow's on_stop message."""
+        self._rt.running = False
+        self._rt.stop_message = message
+        raise Stopped
+
+    def quit(self, message=None):
+        """End the running flow/job and quit the whole app. `message` is shown as a banner."""
+        self._rt.stop_message = message
+        self._rt.request_quit()
+        raise Stopped
+
     def banner(self, text, align="center"):
         """Print `text` in a box on the console (not the log) so it is noticed at a glance.
         Multi-line text works; align="left" keeps the lines flush left inside the box."""
@@ -332,6 +345,7 @@ class Runtime:
         self._pinned = False      # True: _hwnd is a window pinned directly
         self.running = auto_start   # True: start ON without pressing the toggle key
         self.quit = False
+        self.stop_message = None      # banner text set by ctx.stop / ctx.quit, shown instead of on_stop
         self.cam = None
         self._sched = None
         self._date_jobs = []     # [(job_id, server-time target, precise)]
@@ -400,10 +414,20 @@ class Runtime:
                     if target:            # precise job: busy-wait until the target time
                         precise.wait_until(target)
                     func(ctx)
+                except Stopped:
+                    log.info("[%s] stopped", func.__name__)
+                    self._show_stop_message()
                 finally:
                     ctx.release_all()
         run.__name__ = func.__name__
         return run
+
+    def _show_stop_message(self, align="center"):
+        """Show (once) the banner set by ctx.stop / ctx.quit. Returns True if there was one."""
+        text, self.stop_message = self.stop_message, None
+        if text:
+            banner(text, align)
+        return bool(text)
 
     def start_sync(self, url=None, key=None):
         """Start background time sync (ignored if already running)."""
@@ -484,6 +508,9 @@ class Runtime:
                     try:
                         if ok:
                             step(ctx)
+                    except Stopped:
+                        log.info("Step stopped")
+                        self._show_stop_message()
                     finally:
                         ctx.release_all()
                 time.sleep(0.01 if ok else 0.05)   # rest a bit longer if the window is minimized/closed/off screen
@@ -526,7 +553,8 @@ class Runtime:
                         return
         except Stopped:
             log.info("Flow stopped")
-            say("stop")
+            if not self._show_stop_message(align):    # ctx.stop / ctx.quit message replaces on_stop
+                say("stop")
         except TimeoutError as e:
             log.error("Flow failed: %s", e)
             say("error", e)

@@ -23,7 +23,7 @@ for _i in range(10):
     _NAMED[f"num{_i}"] = (0x60 + _i, False)
 
 # Macro control hotkeys. The runtime registers these.
-TOGGLE = "f1"      # ON/OFF
+TOGGLE = "f9"      # ON/OFF (F1 opens the help page in browsers, so it is not used)
 QUIT = "esc"       # quit
 # Sending these would toggle/quit the macro itself, so ctx.key rejects them
 RESERVED = {TOGGLE, QUIT, "escape"}

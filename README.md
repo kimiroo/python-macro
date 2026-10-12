@@ -11,7 +11,7 @@ Run `start.bat`. It finds Python, creates `.venv`, installs dependencies, and la
 
 | Key | Action |
 |-----|--------|
-| `F1` | ON/OFF toggle. Turning it OFF also stops a running flow immediately. With `AUTO_START=True` it starts ON |
+| `F9` | ON/OFF toggle. Turning it OFF also stops a running flow immediately. With `AUTO_START=True` it starts ON |
 | `Esc` | Quit |
 
 > Neither key can be sent with `ctx.key` (see `core/keys.py`).
@@ -69,7 +69,7 @@ Output goes through Python `logging` as `2026-10-12 09:00:00 [INFO] runtime - me
 
 ### Auto start (`AUTO_START`)
 
-`True` starts ON right away, with no F1 needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.
+`True` starts ON right away, with no F9 needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.
 
 ### Server time sync (`SYNC*`)
 
@@ -109,6 +109,8 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
 | `ctx.crop(anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None)` | Cut a region out of the current frame, positioned relative to an anchor (e.g. `ctx.find(name)`; `None` = top-left of the target window) so it follows the window / layout. `scale` multiplies offset and size (browser zoom ratio). `save="img/x.png"` writes a PNG you can register in `IMG_LIST`. Returns the BGR image or `None` |
 | `ctx.ocr(image)` | Read text with Google Cloud Vision. `image` is a BGR image such as `ctx.crop(...)`, or an image file path. Returns the text with all whitespace removed, or `None` (also when OCR is disabled). Needs `config.OCR_KEY` |
+| `ctx.stop(message=None)` | End the running flow and switch the macro OFF; press `F9` to start again from the top. `message` is shown as a banner instead of `on_stop` |
+| `ctx.quit(message=None)` | End the running flow and quit the whole app. `message` is shown as a banner |
 | `ctx.banner(text, align="center")` | Print `text` in a double-bordered `###` box with inverted colors (dark red on white) on the console, not the log, so it is noticed at a glance. Multi-line text works (`align="left"` keeps lines flush left; an indented triple-quoted string is dedented); full-width (e.g. Korean) characters are measured correctly. Colors are skipped when output is redirected or `NO_COLOR` is set |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |
@@ -153,7 +155,7 @@ Default is `config.TARGET_WINDOW` (`''` = whole screen).
 
 ### How to run (decorators)
 
-All of them only run while ON (needs F1 unless `AUTO_START`).
+All of them only run while ON (needs F9 unless `AUTO_START`).
 
 | Decorator | Description |
 |-----------|-------------|
