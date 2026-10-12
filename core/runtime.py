@@ -82,18 +82,48 @@ class Context:
             return None
         return ocr(image, self._rt.ocr_key)
 
-    def click(self, pos=None, offset=(0, 0)):
-        """Click at pos (+ offset), or at the current cursor position if pos is omitted."""
+    def _rel(self, rel):
+        """Screen (x, y) of `rel`, given relative to the top-left of the target window's client area
+        (the whole screen when there is no target). None if the window is not available."""
+        if not self._rt.target_title and not self._rt._pinned:
+            return rel[0], rel[1]
+        hwnd = self._rt._target_hwnd()
+        r = winapi.client_rect(hwnd) if hwnd else None
+        if r is None:
+            return None
+        return r[0] + rel[0], r[1] + rel[1]
+
+    def click(self, pos=None, offset=(0, 0), rel=None):
+        """Click at pos (+ offset), or at the current cursor position if pos is omitted.
+        rel=(x, y) instead of pos: coordinates relative to the top-left of the target window's client
+        area (the area find/crop see). Returns the clicked position, or None if the window is not available."""
         self._check()
+        if rel is not None:
+            if pos is not None:
+                raise ValueError("click: pass either pos or rel, not both")
+            pos = self._rel(rel)
+            if pos is None:
+                log.warning("click skipped: target window not available")
+                return None
         if pos is None:
             click()
-        else:
-            click(pos[0] + offset[0], pos[1] + offset[1])
+            return None
+        pos = (pos[0] + offset[0], pos[1] + offset[1])
+        click(*pos)
+        return pos
 
-    def move(self, pos=None, offset=(0, 0), duration=0.0):
+    def move(self, pos=None, offset=(0, 0), duration=0.0, rel=None):
         """Move the cursor without clicking. Without `pos`, to the center of the target window / screen.
+        rel=(x, y) instead of pos: coordinates relative to the top-left of the target window's client area.
         duration > 0 moves in a straight line over that many seconds (0 = instant). Returns the position moved to, or None if the window is not available."""
         self._check()
+        if rel is not None:
+            if pos is not None:
+                raise ValueError("move: pass either pos or rel, not both")
+            pos = self._rel(rel)
+            if pos is None:
+                log.warning("move skipped: target window not available")
+                return None
         if pos is None:
             pos = self.center()
             if pos is None:
