@@ -361,7 +361,8 @@ class Runtime:
         log.info("Quit")
 
     def register_hotkeys(self):
-        keyboard.add_hotkey(keys.TOGGLE, self.toggle)
+        if keys.TOGGLE:                       # config.TOGGLE_KEY = "" disables the ON/OFF key
+            keyboard.add_hotkey(keys.TOGGLE, self.toggle)
         keyboard.add_hotkey(keys.QUIT, self.request_quit)
 
     # --- search area ---
@@ -406,7 +407,8 @@ class Runtime:
     def _wrap(self, func, target=None):
         def run():
             if not self.running:          # scheduled jobs also stay quiet while OFF
-                log.warning("[%s] skipped: macro is OFF (%s to turn on)", func.__name__, keys.TOGGLE.upper())
+                log.warning("[%s] skipped: macro is OFF%s", func.__name__,
+                            f" ({keys.TOGGLE.upper()} to turn on)" if keys.TOGGLE else "")
                 return
             with self.lock:
                 ctx = Context(self)
@@ -484,7 +486,10 @@ class Runtime:
     def run(self, step=None):
         self.register_hotkeys()
         if self.running:
-            log.info("Auto start: ON (%s to stop, %s to quit)", keys.TOGGLE.upper(), keys.QUIT)
+            stop_hint = f"{keys.TOGGLE.upper()} to stop, " if keys.TOGGLE else ""
+            log.info("Auto start: ON (%s%s to quit)", stop_hint, keys.QUIT)
+        elif not keys.TOGGLE:
+            log.warning("The toggle key is disabled (config.TOGGLE_KEY) and AUTO_START is off: the macro will never start")
         if self._auto_sync:                           # SYNC enabled: start background sync right away
             try:
                 self.start_sync()

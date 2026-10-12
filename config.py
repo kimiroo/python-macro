@@ -8,6 +8,11 @@ IMG_LIST = {
 # Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL' (anything else falls back to 'INFO').
 LOG_LEVEL = 'INFO'
 
+# Key that switches the macro ON/OFF (a key name such as 'f9'). None or '' disables it (default): the macro
+# can then only run with AUTO_START = True, and ctx.stop() ends it for good (quit with Esc).
+# Suggested value: 'f9' (F1 would open the browser's help page).
+TOGGLE_KEY = None
+
 # True: start ON right away (no toggle key needed). It starts immediately with no delay,
 # so setting TARGET_WINDOW to pin the target window is recommended.
 AUTO_START = True

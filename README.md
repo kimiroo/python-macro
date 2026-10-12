@@ -11,7 +11,7 @@ Run `start.bat`. It finds Python, creates `.venv`, installs dependencies, and la
 
 | Key | Action |
 |-----|--------|
-| `F9` | ON/OFF toggle. Turning it OFF also stops a running flow immediately. With `AUTO_START=True` it starts ON |
+| `config.TOGGLE_KEY` (suggested `F9`) | ON/OFF toggle; disabled by default. Turning it OFF also stops a running flow immediately. With `AUTO_START=True` it starts ON |
 | `Esc` | Quit |
 
 > Neither key can be sent with `ctx.key` (see `core/keys.py`).
@@ -67,9 +67,17 @@ An unknown value raises a `ValueError` at startup. To support another browser, a
 
 Output goes through Python `logging` as `2026-10-12 09:00:00 [INFO] runtime - message` (the module name, without the `core.` prefix). `LOG_LEVEL` is `'DEBUG'`, `'INFO'` (default), `'WARNING'`, `'ERROR'` or `'CRITICAL'`; an unknown value falls back to `INFO`. Time sync logs two lines at `INFO` (start and done); the per-sample progress is `DEBUG`. In your own flows use `log = logging.getLogger(__name__)` to log in the same format.
 
+### Toggle key (`TOGGLE_KEY`)
+
+```python
+TOGGLE_KEY = None    # default: disabled. Suggested value: 'f9'
+```
+
+The key that switches the macro ON/OFF. It is **disabled by default** (`None` or `''`): the macro then only runs with `AUTO_START = True` (a startup warning appears otherwise), and `ctx.stop()` ends it for good, so quit with `Esc`. Suggested value: `'f9'` (`F1` opens the browser's help page). A configured key cannot be sent with `ctx.key`; when it is disabled, it can be.
+
 ### Auto start (`AUTO_START`)
 
-`True` starts ON right away, with no F9 needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.
+`True` starts ON right away, with no toggle key needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.
 
 ### Server time sync (`SYNC*`)
 
@@ -109,7 +117,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
 | `ctx.crop(anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None)` | Cut a region out of the current frame, positioned relative to an anchor (e.g. `ctx.find(name)`; `None` = top-left of the target window) so it follows the window / layout. `scale` multiplies offset and size (browser zoom ratio). `save="img/x.png"` writes a PNG you can register in `IMG_LIST`. Returns the BGR image or `None` |
 | `ctx.ocr(image)` | Read text with Google Cloud Vision. `image` is a BGR image such as `ctx.crop(...)`, or an image file path. Returns the text with all whitespace removed, or `None` (also when OCR is disabled). Needs `config.OCR_KEY` |
-| `ctx.stop(message=None)` | End the running flow and switch the macro OFF; press `F9` to start again from the top. `message` is shown as a banner instead of `on_stop` |
+| `ctx.stop(message=None)` | End the running flow and switch the macro OFF; press the toggle key to start again from the top (if enabled). `message` is shown as a banner instead of `on_stop` |
 | `ctx.quit(message=None)` | End the running flow and quit the whole app. `message` is shown as a banner |
 | `ctx.banner(text, align="center")` | Print `text` in a double-bordered `###` box with inverted colors (dark red on white) on the console, not the log, so it is noticed at a glance. Multi-line text works (`align="left"` keeps lines flush left; an indented triple-quoted string is dedented); full-width (e.g. Korean) characters are measured correctly. Colors are skipped when output is redirected or `NO_COLOR` is set |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
@@ -155,7 +163,7 @@ Default is `config.TARGET_WINDOW` (`''` = whole screen).
 
 ### How to run (decorators)
 
-All of them only run while ON (needs F9 unless `AUTO_START`).
+All of them only run while ON (needs the toggle key unless `AUTO_START`).
 
 | Decorator | Description |
 |-----------|-------------|

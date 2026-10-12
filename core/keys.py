@@ -23,10 +23,17 @@ for _i in range(10):
     _NAMED[f"num{_i}"] = (0x60 + _i, False)
 
 # Macro control hotkeys. The runtime registers these.
-TOGGLE = "f9"      # ON/OFF (F1 opens the help page in browsers, so it is not used)
+TOGGLE = ""         # ON/OFF key; set from config.TOGGLE_KEY by configure() (empty = disabled)
 QUIT = "esc"       # quit
 # Sending these would toggle/quit the macro itself, so ctx.key rejects them
 RESERVED = {TOGGLE, QUIT, "escape"}
+
+
+def configure(toggle):
+    """Set the ON/OFF key from config.TOGGLE_KEY. An empty value disables the toggle key."""
+    global TOGGLE, RESERVED
+    TOGGLE = (toggle or "").strip().lower()
+    RESERVED = {k for k in (TOGGLE, QUIT, "escape") if k}
 
 
 def parse(spec):

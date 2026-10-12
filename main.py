@@ -1,9 +1,12 @@
 import logging
 
 from config import (AUTO_START, IMG_LIST, LOG_LEVEL, OCR_KEY, SYNC, SYNC_HEADERS, SYNC_INTERVAL, SYNC_KEY, SYNC_UA,
-                    SYNC_URL, TARGET_EXACT, TARGET_WINDOW)
+                    SYNC_URL, TARGET_EXACT, TARGET_WINDOW, TOGGLE_KEY)
+from core import keys
 from core.runtime import Runtime
 import logic  # noqa: F401  (importing registers @flow/@every/@at)
+
+keys.configure(TOGGLE_KEY)
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
