@@ -15,6 +15,10 @@ TARGET_WINDOW = ''
 # False: the window title only has to contain TARGET_WINDOW (greedy). True: the whole title must equal it.
 TARGET_EXACT = False
 
+# Browser the macro drives: 'chrome' or 'firefox'. browsers.py turns it into the title suffix
+# (BROWSER_STRING) that window lookups append to the page title.
+TARGET_BROWSER = 'firefox'
+
 # Server time sync (the system clock is never changed)
 # SYNC = True starts background sync right at startup. Even if False, a flow can start it with ctx.sync_time().
 # The value at the SYNC_KEY path in the JSON response is read as epoch milliseconds.

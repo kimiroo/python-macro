@@ -50,6 +50,19 @@ TARGET_WINDOW = ''   # '' = whole screen
 - If the window is not open yet or gets closed, it waits until it opens and re-acquires it.
 - You can change it at runtime with `ctx.set_window()` / `ctx.use_active_window()` / `ctx.use_full_screen()`.
 
+### Browser (`TARGET_BROWSER`)
+
+`'chrome'` or `'firefox'`. `browsers.py` maps it to the title suffix browsers append to the page title (`" - Chrome"`, `" — Mozilla Firefox"`). Use it to match a browser window:
+
+```python
+from browsers import BROWSER_STRING, title
+
+ctx.focus_window(f"My page{BROWSER_STRING}")      # or title("My page")
+ctx.set_window(title("My page"))
+```
+
+An unknown value raises a `ValueError` at startup. To support another browser, add its suffix to `BROWSER_TITLES` in `browsers.py`.
+
 ### Auto start (`AUTO_START`)
 
 `True` starts ON right away, with no F1 needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.
