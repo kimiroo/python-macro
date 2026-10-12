@@ -12,7 +12,7 @@ Run `start.bat`. It finds Python, creates `.venv`, installs dependencies, and la
 | Key | Action |
 |-----|--------|
 | `F1` | ON/OFF toggle. Turning it OFF also stops a running flow immediately. With `AUTO_START=True` it starts ON |
-| `` ` `` | Quit (the `~` key, no Shift needed) |
+| `Esc` | Quit |
 
 > Neither key can be sent with `ctx.key` (see `core/keys.py`).
 
@@ -109,6 +109,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.wait_for(name, timeout=5)` | Wait until it appears; returns coordinates or `None` |
 | `ctx.crop(anchor=None, offset=(0, 0), size=(100, 100), scale=1.0, save=None)` | Cut a region out of the current frame, positioned relative to an anchor (e.g. `ctx.find(name)`; `None` = top-left of the target window) so it follows the window / layout. `scale` multiplies offset and size (browser zoom ratio). `save="img/x.png"` writes a PNG you can register in `IMG_LIST`. Returns the BGR image or `None` |
 | `ctx.ocr(image)` | Read text with Google Cloud Vision. `image` is a BGR image such as `ctx.crop(...)`, or an image file path. Returns the text with all whitespace removed, or `None` (also when OCR is disabled). Needs `config.OCR_KEY` |
+| `ctx.banner(text, align="center")` | Print `text` in a double-bordered `###` box with inverted colors (dark red on white) on the console, not the log, so it is noticed at a glance. Multi-line text works (`align="left"` keeps lines flush left; an indented triple-quoted string is dedented); full-width (e.g. Korean) characters are measured correctly. Colors are skipped when output is redirected or `NO_COLOR` is set |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |
 | `ctx.click_image(name, offset, after)` | Click if visible and return `True` |
@@ -156,7 +157,7 @@ All of them only run while ON (needs F1 unless `AUTO_START`).
 
 | Decorator | Description |
 |-----------|-------------|
-| `@flow(loop=False, start_at=None, precise=False)` | Runs top to bottom, one step at a time. `loop=True` repeats it. `start_at="09:00"` starts at that time once ON (if you need time sync, use `ctx.wait_until` instead) |
+| `@flow(loop=False, start_at=None, precise=False, on_done=None, on_stop=None, on_error=None, align="center")` | Runs top to bottom, one step at a time. `loop=True` repeats it. `start_at="09:00"` starts at that time once ON (if you need time sync, use `ctx.wait_until` instead). `on_done` / `on_stop` / `on_error` are messages shown as a banner when the flow finishes, is stopped with the OFF key, or fails; `on_error` may contain `{error}`, replaced by the error text; `align="left"` left-aligns multi-line banners |
 | `@at("09:00", precise=False)` | Run the function once at the given time (server time) |
 | `@every(seconds=60)` | Run periodically (APScheduler) |
 | `@cron(hour=9, minute=0)` | Repeat on a time-of-day schedule (APScheduler, no server-time correction) |

@@ -2,7 +2,10 @@ from core.jobs import flow
 from core.runtime import Context
 
 
-@flow(loop=False)          # loop=True restarts it after it finishes
+@flow(
+    loop=False, # loop=True restarts it after it finishes
+    on_done="Done."
+)
 def main(ctx: Context):
     ctx.wait_click("next_btn", timeout=10)      # 1) wait for next_btn to appear, then click it
     ctx.wait_for("popup", timeout=5)            # 2) wait for the popup to show up

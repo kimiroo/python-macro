@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from . import jobs, keys, precise, timesync, winapi
 from . import precise as precise_mod
+from .banner import banner
 from .mouse import click, move, scroll
 from .ocr import ocr, resolve_key
 from .vision import load_templates, match
@@ -100,6 +101,11 @@ class Context:
         pos = (pos[0] + offset[0], pos[1] + offset[1])
         move(*pos, duration, self.sleep)
         return pos
+
+    def banner(self, text, align="center"):
+        """Print `text` in a box on the console (not the log) so it is noticed at a glance.
+        Multi-line text works; align="left" keeps the lines flush left inside the box."""
+        banner(text, align)
 
     def center(self):
         """Center (x, y) of the target window (or the whole screen). None if the window is not available."""
@@ -488,6 +494,13 @@ class Runtime:
             self.cam.stop()
 
     def _run_flow(self, fn, loop, start_at, prec):
+        msgs, align = jobs.flow_messages(), jobs.flow_banner_align()
+
+        def say(kind, error=None):
+            text = msgs.get(kind)
+            if text:
+                banner(text.replace("{error}", str(error)) if error is not None else text, align)
+
         try:
             if start_at:                                  # scheduled start: wait without holding the lock
                 target = jobs.parse_when(start_at)
@@ -508,10 +521,16 @@ class Runtime:
                         ctx.release_all()     # release held keys even on stop/error
                     if not loop:
                         log.info("Flow finished")
+                        say("done")
                         self.running = False
                         return
         except Stopped:
             log.info("Flow stopped")
+            say("stop")
         except TimeoutError as e:
             log.error("Flow failed: %s", e)
+            say("error", e)
             self.running = False
+        except Exception as e:           # a bug in the flow: show the banner, then crash with the traceback as before
+            say("error", e)
+            raise

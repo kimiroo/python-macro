@@ -56,15 +56,30 @@ def registered():
     return list(_registry)
 
 
-def flow(loop=False, start_at=None, precise=False):
+def flow(loop=False, start_at=None, precise=False, on_done=None, on_stop=None, on_error=None,
+         align="center"):
     """@flow() - a scenario that runs top to bottom. loop=True restarts it after it finishes.
     start_at="09:00" starts at that time once the macro is ON (it waits until then).
-    precise=True makes that wait precise."""
+    precise=True makes that wait precise.
+    on_done / on_stop / on_error: message shown as a banner in the console when the flow finishes,
+    is stopped (OFF key), or fails. on_error may contain "{error}", replaced by the error text.
+    align: "center" or "left", how multi-line banner text sits in the box.
+    None = no banner."""
     def deco(func):
-        _flow.update(func=func, loop=loop, start_at=start_at, precise=precise)
+        _flow.update(func=func, loop=loop, start_at=start_at, precise=precise,
+                     messages={"done": on_done, "stop": on_stop, "error": on_error}, align=align)
         return func
     return deco
 
 
 def registered_flow():
     return _flow.get("func"), _flow.get("loop", False), _flow.get("start_at"), _flow.get("precise", False)
+
+
+def flow_messages():
+    """{"done": str|None, "stop": str|None, "error": str|None} banners set on @flow."""
+    return _flow.get("messages", {})
+
+
+def flow_banner_align():
+    return _flow.get("align", "center")

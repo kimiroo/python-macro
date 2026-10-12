@@ -24,9 +24,9 @@ for _i in range(10):
 
 # Macro control hotkeys. The runtime registers these.
 TOGGLE = "f1"      # ON/OFF
-QUIT = "`"         # quit (the ~ key; works without Shift)
+QUIT = "esc"       # quit
 # Sending these would toggle/quit the macro itself, so ctx.key rejects them
-RESERVED = {TOGGLE, QUIT, "~"}
+RESERVED = {TOGGLE, QUIT, "escape"}
 
 
 def parse(spec):
