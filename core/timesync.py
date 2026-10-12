@@ -8,6 +8,7 @@ It stops by itself after `count` successful samples (default 10); the final offs
 """
 import http.client
 import json
+import logging
 import random
 import threading
 import time
@@ -17,6 +18,7 @@ from urllib.parse import urlsplit
 
 from . import browser
 
+log = logging.getLogger(__name__.removeprefix("core."))
 _offset = 0.0      # seconds. 0 before syncing (= system time as is)
 _samples = deque(maxlen=10)    # [(rtt, offset)]
 _thread = None
@@ -89,7 +91,7 @@ def _loop(url, key, interval, timeout, on_update, headers, count):
                 except Exception as e:
                     conn.close()
                     if not warned:
-                        print("Time sync request failed:", e)
+                        log.warning("Time sync request failed: %s", e)
                         warned = True
             if sample:
                 warned = False
@@ -101,7 +103,7 @@ def _loop(url, key, interval, timeout, on_update, headers, count):
                 done += 1
                 if done >= count:
                     _finished = True
-                    print(f"Time sync: done after {done} samples, offset {off * 1000:+.2f} ms")
+                    log.info("Time sync: done after %d samples, offset %+.2f ms", done, off * 1000)
                     break
             _stop.wait(random.uniform(*interval))
     finally:

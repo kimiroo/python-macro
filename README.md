@@ -63,6 +63,10 @@ ctx.set_window(title("My page"))
 
 An unknown value raises a `ValueError` at startup. To support another browser, add its suffix to `BROWSER_TITLES` in `browsers.py`.
 
+### Logging (`LOG_LEVEL`)
+
+Output goes through Python `logging` as `2026-10-12 09:00:00 [INFO] runtime - message` (the module name, without the `core.` prefix). `LOG_LEVEL` is `'DEBUG'`, `'INFO'` (default), `'WARNING'`, `'ERROR'` or `'CRITICAL'`; an unknown value falls back to `INFO`. Time sync logs two lines at `INFO` (start and done); the per-sample progress is `DEBUG`. In your own flows use `log = logging.getLogger(__name__)` to log in the same format.
+
 ### Auto start (`AUTO_START`)
 
 `True` starts ON right away, with no F1 needed. It starts immediately with no delay, so **setting `TARGET_WINDOW` as well is recommended**.

@@ -1,5 +1,6 @@
 """Screen capture, target window, ON/OFF state, hotkeys, main loop, scheduler.
 Logic is injected via the step callback and the jobs registered in core.jobs."""
+import logging
 import os
 import threading
 import time
@@ -15,6 +16,8 @@ from . import precise as precise_mod
 from .mouse import click, move, scroll
 from .ocr import ocr, resolve_key
 from .vision import load_templates, match
+
+log = logging.getLogger(__name__.removeprefix("core."))
 
 
 class Stopped(Exception):
@@ -71,10 +74,10 @@ class Context:
         or OCR is disabled because config.OCR_KEY is empty / the key file is missing)."""
         self._check()
         if self._rt.ocr_key is None:
-            print("OCR skipped: disabled (set config.OCR_KEY to the service-account key file)")
+            log.warning("OCR skipped: disabled (set config.OCR_KEY to the service-account key file)")
             return None
         if image is None:
-            print("OCR failed: no image")
+            log.warning("OCR failed: no image")
             return None
         return ocr(image, self._rt.ocr_key)
 
@@ -113,13 +116,13 @@ class Context:
         if pos is None and at_center:
             pos = self.center()
             if pos is None:
-                print("[scroll] skipped: target window not available")
+                log.warning("scroll skipped: target window not available")
                 return
         target = self._rt._target_hwnd() if (self._rt.target_title or self._rt._pinned) else None
         if pos is not None and target:
             under = winapi.window_at(*pos)
             if under != target:       # the wheel goes to whatever window is under the cursor
-                print(f"[scroll] warning: {pos} is covered by another window: {winapi.window_title(under)!r}")
+                log.warning("scroll: %s is covered by another window: %r", pos, winapi.window_title(under))
         scroll(notches, pos, wait=self.sleep)
 
     def key(self, spec, hold=0.03, after=0.05, scan=True):
@@ -208,14 +211,14 @@ class Context:
         self.sleep(0.05)
         self.refresh()
         if result is not None and client and tuple(result) != tuple(size):
-            print(f"resize_window: asked for {tuple(size)}, got {tuple(result)}")
+            log.warning("resize_window: asked for %s, got %s", tuple(size), tuple(result))
         return result
 
     def use_active_window(self):
         """Pin the currently focused window as the search target."""
         hwnd = winapi.foreground_window()
         self._rt.set_target(hwnd=hwnd)
-        print("Target window:", winapi.window_title(hwnd))
+        log.info("Target window: %s", winapi.window_title(hwnd))
         self.refresh()
 
     def use_full_screen(self):
@@ -331,11 +334,11 @@ class Runtime:
     # --- hotkeys ---
     def toggle(self):
         self.running = not self.running
-        print("ON" if self.running else "OFF")
+        log.info("ON" if self.running else "OFF")
 
     def request_quit(self):
         self.quit = True
-        print("Quit")
+        log.info("Quit")
 
     def register_hotkeys(self):
         keyboard.add_hotkey(keys.TOGGLE, self.toggle)
@@ -358,7 +361,7 @@ class Runtime:
         if not (self._hwnd and winapi.user32.IsWindow(self._hwnd)):
             self._hwnd = winapi.find_window(self.target_title, self.target_exact)
             if self._hwnd:
-                print("Target window:", winapi.window_title(self._hwnd))
+                log.info("Target window: %s", winapi.window_title(self._hwnd))
         return self._hwnd
 
     def search_area(self, frame):
@@ -383,7 +386,7 @@ class Runtime:
     def _wrap(self, func, target=None):
         def run():
             if not self.running:          # scheduled jobs also stay quiet while OFF
-                print(f"[{func.__name__}] skipped: macro is OFF ({keys.TOGGLE.upper()} to turn on)")
+                log.warning("[%s] skipped: macro is OFF (%s to turn on)", func.__name__, keys.TOGGLE.upper())
                 return
             with self.lock:
                 ctx = Context(self)
@@ -403,11 +406,11 @@ class Runtime:
             raise ValueError("sync_time: no url (pass one or set config.SYNC_URL)")
         if timesync.start(url, key or self.sync_key, interval=self.sync_interval, on_update=self._on_sync,
                           ua=self.sync_ua, headers=self.sync_headers):
-            print("Time sync: syncing with", url)
+            log.info("Time sync: syncing with %s", url)
 
     def _on_sync(self, off, rtt):
-        print(f"Time sync: syncing... offset {off * 1000:+.2f} ms (best RTT {rtt * 1000:.1f} ms, "
-              f"{timesync.sample_count()} samples)")
+        log.debug("Time sync: syncing... offset %+.2f ms (best RTT %.1f ms, %d samples)",
+                 off * 1000, rtt * 1000, timesync.sample_count())
         if self._last_off is None or abs(off - self._last_off) > 1e-4:   # reschedule if it moved by 0.1 ms or more
             self._last_off = off
             self._reschedule_dates()
@@ -451,12 +454,12 @@ class Runtime:
     def run(self, step=None):
         self.register_hotkeys()
         if self.running:
-            print(f"Auto start: ON ({keys.TOGGLE.upper()} to stop, {keys.QUIT} to quit)")
+            log.info("Auto start: ON (%s to stop, %s to quit)", keys.TOGGLE.upper(), keys.QUIT)
         if self._auto_sync:                           # SYNC enabled: start background sync right away
             try:
                 self.start_sync()
             except ValueError as e:
-                print("SYNC is enabled but", e)
+                log.warning("SYNC is enabled but %s", e)
         self.cam = dxcam.create(output_color="BGR")   # whole primary monitor
         self.cam.start(target_fps=60)
         sched = self.start_scheduler()
@@ -488,7 +491,7 @@ class Runtime:
         try:
             if start_at:                                  # scheduled start: wait without holding the lock
                 target = jobs.parse_when(start_at)
-                print("Flow waiting, scheduled start:", target)
+                log.info("Flow waiting, scheduled start: %s", target)
                 ctx = Context(self)
                 if prec:
                     precise.boost()
@@ -504,11 +507,11 @@ class Runtime:
                     finally:
                         ctx.release_all()     # release held keys even on stop/error
                     if not loop:
-                        print("Flow finished")
+                        log.info("Flow finished")
                         self.running = False
                         return
         except Stopped:
-            print("Flow stopped")
+            log.info("Flow stopped")
         except TimeoutError as e:
-            print("Flow failed:", e)
+            log.error("Flow failed: %s", e)
             self.running = False

@@ -5,6 +5,9 @@ IMG_LIST = {
     "popup":    ("img/popup.png",  0.85),
 }
 
+# Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL' (anything else falls back to 'INFO').
+LOG_LEVEL = 'INFO'
+
 # True: start ON right away (no toggle key needed). It starts immediately with no delay,
 # so setting TARGET_WINDOW to pin the target window is recommended.
 AUTO_START = True
