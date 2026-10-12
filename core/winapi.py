@@ -85,3 +85,42 @@ def bring_to_front(hwnd):
         if attached:
             user32.AttachThreadInput(cur, fg_thread, False)
     return user32.GetForegroundWindow() == hwnd
+
+
+def window_rect(hwnd):
+    """Outer rectangle of the window in screen coordinates (left, top, width, height)."""
+    rc = RECT()
+    user32.GetWindowRect(hwnd, ctypes.byref(rc))
+    return rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top
+
+
+def resize_window(hwnd, width, height, pos=None, client=True):
+    """Resize (and optionally move to `pos`) a window. client=True: width x height is the client area
+    (what image search sees), so the frame is added on top; client=False: the outer size.
+    A maximized / minimized window is restored first. Returns the resulting client size (w, h), or None
+    if the window is gone."""
+    if not user32.IsWindow(hwnd):
+        return None
+    if user32.IsIconic(hwnd) or user32.IsZoomed(hwnd):
+        user32.ShowWindow(hwnd, 9)              # SW_RESTORE
+    flags = 0x0004 | 0x0010                      # SWP_NOZORDER | SWP_NOACTIVATE
+    if pos is None:
+        flags |= 0x0002                          # SWP_NOMOVE
+    x, y = pos if pos is not None else (0, 0)
+
+    def apply():
+        w, h = width, height
+        if client:                               # outer = wanted client + current frame
+            _, _, ow, oh = window_rect(hwnd)
+            c = client_rect(hwnd)
+            if c is None:
+                return
+            w, h = width + ow - c[2], height + oh - c[3]
+        user32.SetWindowPos(hwnd, 0, int(x), int(y), int(w), int(h), flags)
+
+    apply()
+    rect = client_rect(hwnd)
+    if client and rect and (rect[2], rect[3]) != (width, height):
+        apply()                                  # the frame can change after the first resize (DPI, restore)
+        rect = client_rect(hwnd)
+    return (rect[2], rect[3]) if rect else None

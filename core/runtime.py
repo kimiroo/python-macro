@@ -189,6 +189,28 @@ class Context:
                 raise TimeoutError(f"Could not bring window '{title or self._rt.target_title or 'target'}' to front")
             self.sleep(0.1)
 
+    def resize_window(self, size, pos=None, title=None, exact=False, client=True, timeout=3.0):
+        """Resize a window, optionally moving it to `pos` (screen x, y). `title` picks the window like
+        focus_window (exact=True: whole title must match); without it the current target window is used.
+        client=True: `size` is the client area, which is what find/crop see (browsers draw tabs and the
+        address bar inside it); client=False: the outer window size. A maximized window is restored first.
+        Raises TimeoutError if the window is not found. Returns the resulting client size (w, h);
+        it differs from `size` when the app refuses it (e.g. below the minimum window size)."""
+        end = time.monotonic() + timeout
+        while True:
+            hwnd = winapi.find_window(title, exact) if title else self._rt._target_hwnd()
+            if hwnd:
+                break
+            if time.monotonic() > end:
+                raise TimeoutError(f"Window '{title or self._rt.target_title or 'target'}' not found within {timeout}s")
+            self.sleep(0.1)
+        result = winapi.resize_window(hwnd, size[0], size[1], pos, client)
+        self.sleep(0.05)
+        self.refresh()
+        if result is not None and client and tuple(result) != tuple(size):
+            print(f"resize_window: asked for {tuple(size)}, got {tuple(result)}")
+        return result
+
     def use_active_window(self):
         """Pin the currently focused window as the search target."""
         hwnd = winapi.foreground_window()

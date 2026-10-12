@@ -129,6 +129,7 @@ Default is `config.TARGET_WINDOW` (`''` = whole screen).
 |----------|-------------|
 | `ctx.set_window("title", timeout=10, exact=False)` | Switch to the window whose title contains this (`exact=True`: whole title equals it); wait until it opens |
 | `ctx.focus_window("title", timeout=3, exact=False)` | Bring the window to the front, restoring it if minimized. No title = the current target window. `exact` works as in `set_window`. Does not change the target |
+| `ctx.resize_window(size, pos=None, title=None, exact=False, client=True)` | Resize a window (and move it to `pos`). `client=True`: `size` is the client area, which is what find/crop see; browsers draw tabs and the address bar inside it, so add your own margin for the page area. `client=False`: outer size. No `title` = the current target window. Maximized windows are restored first. Returns the resulting client size |
 | `ctx.use_active_window()` | Pin the window currently in front |
 | `ctx.use_full_screen()` | Go back to the whole screen |
 
