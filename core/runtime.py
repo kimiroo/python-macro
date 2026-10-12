@@ -219,7 +219,8 @@ class Context:
         """Resize a window, optionally moving it to `pos` (screen x, y). `title` picks the window like
         focus_window (exact=True: whole title must match); without it the current target window is used.
         client=True: `size` is the client area, which is what find/crop see (browsers draw tabs and the
-        address bar inside it); client=False: the outer window size. A maximized window is restored first.
+        address bar inside it); client=False: the outer window size. size=None keeps the current size
+        (move only, see move_window). A maximized window is restored first.
         Raises TimeoutError if the window is not found. Returns the resulting client size (w, h);
         it differs from `size` when the app refuses it (e.g. below the minimum window size)."""
         end = time.monotonic() + timeout
@@ -230,12 +231,18 @@ class Context:
             if time.monotonic() > end:
                 raise TimeoutError(f"Window '{title or self._rt.target_title or 'target'}' not found within {timeout}s")
             self.sleep(0.1)
-        result = winapi.resize_window(hwnd, size[0], size[1], pos, client)
+        w, h = size if size is not None else (None, None)
+        result = winapi.resize_window(hwnd, w, h, pos, client)
         self.sleep(0.05)
         self.refresh()
-        if result is not None and client and tuple(result) != tuple(size):
+        if result is not None and size is not None and client and tuple(result) != tuple(size):
             log.warning("resize_window: asked for %s, got %s", tuple(size), tuple(result))
         return result
+
+    def move_window(self, pos, title=None, exact=False, timeout=3.0):
+        """Move a window to `pos` (screen x, y of its top-left) without resizing it. `title`/`exact`
+        pick the window like resize_window (default: the current target window). Returns the client size."""
+        return self.resize_window(None, pos, title, exact, timeout=timeout)
 
     def use_active_window(self):
         """Pin the currently focused window as the search target."""

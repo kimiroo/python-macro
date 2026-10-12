@@ -102,6 +102,7 @@ def window_rect(hwnd):
 def resize_window(hwnd, width, height, pos=None, client=True):
     """Resize (and optionally move to `pos`) a window. client=True: width x height is the client area
     (what image search sees), so the frame is added on top; client=False: the outer size.
+    width/height None keeps the current size (move only).
     A maximized / minimized window is restored first. Returns the resulting client size (w, h), or None
     if the window is gone."""
     if not user32.IsWindow(hwnd):
@@ -111,6 +112,9 @@ def resize_window(hwnd, width, height, pos=None, client=True):
     flags = 0x0004 | 0x0010                      # SWP_NOZORDER | SWP_NOACTIVATE
     if pos is None:
         flags |= 0x0002                          # SWP_NOMOVE
+    if width is None or height is None:
+        flags |= 0x0001                          # SWP_NOSIZE
+        client = False                           # nothing to compute from the frame
     x, y = pos if pos is not None else (0, 0)
 
     def apply():
@@ -121,7 +125,7 @@ def resize_window(hwnd, width, height, pos=None, client=True):
             if c is None:
                 return
             w, h = width + ow - c[2], height + oh - c[3]
-        user32.SetWindowPos(hwnd, 0, int(x), int(y), int(w), int(h), flags)
+        user32.SetWindowPos(hwnd, 0, int(x), int(y), int(w or 0), int(h or 0), flags)
 
     apply()
     rect = client_rect(hwnd)
