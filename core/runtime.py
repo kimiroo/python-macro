@@ -120,6 +120,10 @@ class Context:
         Multi-line text works; align="left" keeps the lines flush left inside the box."""
         banner(text, align)
 
+    def set_title(self, text):
+        """Change the console window title (config.MACRO_TITLE sets it at startup)."""
+        winapi.set_console_title(text)
+
     def center(self):
         """Center (x, y) of the target window (or the whole screen). None if the window is not available."""
         if self._area is None:
@@ -332,8 +336,9 @@ class Context:
 class Runtime:
     def __init__(self, img_list, sync_url=None, sync_key="data", sync=False, sync_interval=(2.0, 5.0),
                  sync_ua=None, sync_headers=None, target_title="", auto_start=False, target_exact=False,
-                 ocr_key=""):
+                 ocr_key="", title=""):
         self.sync_url, self.sync_key, self.sync_interval = sync_url, sync_key, sync_interval
+        self.title = title             # console window title, empty = leave unchanged
         self.ocr_key = resolve_key(ocr_key)   # None: OCR disabled
         self.sync_ua, self.sync_headers = sync_ua, sync_headers
         self._auto_sync = sync
@@ -484,6 +489,8 @@ class Runtime:
 
     # --- main loop ---
     def run(self, step=None):
+        if self.title:
+            winapi.set_console_title(self.title)
         self.register_hotkeys()
         if self.running:
             stop_hint = f"{keys.TOGGLE.upper()} to stop, " if keys.TOGGLE else ""

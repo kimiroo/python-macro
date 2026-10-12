@@ -5,6 +5,9 @@ IMG_LIST = {
     "popup":    ("img/popup.png",  0.85),
 }
 
+# Title of the console window (start.bat). Empty ('') leaves it unchanged. A flow can change it with ctx.set_title().
+MACRO_TITLE = 'Macro Title'
+
 # Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL' (anything else falls back to 'INFO').
 LOG_LEVEL = 'INFO'
 

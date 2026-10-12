@@ -11,6 +11,11 @@ class RECT(ctypes.Structure):
                 ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
 
 
+def set_console_title(text):
+    """Set the title of this process's console window (the start.bat window)."""
+    ctypes.windll.kernel32.SetConsoleTitleW(str(text))
+
+
 def foreground_window():
     return user32.GetForegroundWindow()
 

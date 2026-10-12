@@ -63,6 +63,10 @@ ctx.set_window(title("My page"))
 
 An unknown value raises a `ValueError` at startup. To support another browser, add its suffix to `BROWSER_TITLES` in `browsers.py`.
 
+### Window title (`MACRO_TITLE`)
+
+Title of the console window that `start.bat` opens, set at startup so several macro windows can be told apart in the taskbar. Empty (`''`) leaves the title unchanged. A flow can change it later with `ctx.set_title(text)`.
+
 ### Logging (`LOG_LEVEL`)
 
 Output goes through Python `logging` as `2026-10-12 09:00:00 [INFO] runtime - message` (the module name, without the `core.` prefix). `LOG_LEVEL` is `'DEBUG'`, `'INFO'` (default), `'WARNING'`, `'ERROR'` or `'CRITICAL'`; an unknown value falls back to `INFO`. Time sync logs two lines at `INFO` (start and done); the per-sample progress is `DEBUG`. In your own flows use `log = logging.getLogger(__name__)` to log in the same format.
@@ -119,6 +123,7 @@ Uses the names registered in `config.IMG_LIST`.
 | `ctx.ocr(image)` | Read text with Google Cloud Vision. `image` is a BGR image such as `ctx.crop(...)`, or an image file path. Returns the text with all whitespace removed, or `None` (also when OCR is disabled). Needs `config.OCR_KEY` |
 | `ctx.stop(message=None)` | End the running flow and switch the macro OFF; press the toggle key to start again from the top (if enabled). `message` is shown as a banner instead of `on_stop` |
 | `ctx.quit(message=None)` | End the running flow and quit the whole app. `message` is shown as a banner |
+| `ctx.set_title(text)` | Change the console window title (`MACRO_TITLE` sets it at startup), e.g. to show progress in the taskbar |
 | `ctx.banner(text, align="center")` | Print `text` in a double-bordered `###` box with inverted colors (dark red on white) on the console, not the log, so it is noticed at a glance. Multi-line text works (`align="left"` keeps lines flush left; an indented triple-quoted string is dedented); full-width (e.g. Korean) characters are measured correctly. Colors are skipped when output is redirected or `NO_COLOR` is set |
 | `ctx.wait_any([names], timeout=5)` | Wait until ANY of the images appears (OR); returns `(name, (x, y))` of the first one found, or `None` |
 | `ctx.wait_click(name, timeout=10)` | Wait then click; stops the flow on timeout (`TimeoutError`) |

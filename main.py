@@ -1,6 +1,6 @@
 import logging
 
-from config import (AUTO_START, IMG_LIST, LOG_LEVEL, OCR_KEY, SYNC, SYNC_HEADERS, SYNC_INTERVAL, SYNC_KEY, SYNC_UA,
+from config import (AUTO_START, IMG_LIST, LOG_LEVEL, MACRO_TITLE, OCR_KEY, SYNC, SYNC_HEADERS, SYNC_INTERVAL, SYNC_KEY, SYNC_UA,
                     SYNC_URL, TARGET_EXACT, TARGET_WINDOW, TOGGLE_KEY)
 from core import keys
 from core.runtime import Runtime
@@ -16,4 +16,4 @@ logging.basicConfig(
 
 if __name__ == "__main__":
     Runtime(IMG_LIST, SYNC_URL, SYNC_KEY, SYNC, SYNC_INTERVAL, SYNC_UA, SYNC_HEADERS,
-            TARGET_WINDOW, AUTO_START, TARGET_EXACT, OCR_KEY).run(getattr(logic, "step", None))
+            TARGET_WINDOW, AUTO_START, TARGET_EXACT, OCR_KEY, MACRO_TITLE).run(getattr(logic, "step", None))
