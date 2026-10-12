@@ -61,12 +61,15 @@ if errorlevel 1 (
 
 rem ---- 4. run ----
 ".venv\Scripts\python.exe" main.py
-if errorlevel 1 (
+set "RC=%errorlevel%"
+if not "%RC%"=="0" (
     echo.
     echo The macro exited with an error.
-    pause
+    echo.
 )
-exit /b %errorlevel%
+echo Press any keys to exit...
+pause > nul
+exit /b %RC%
 
 rem ---- helper: sets PY to a working Python command, or leaves it empty ----
 :findpy
